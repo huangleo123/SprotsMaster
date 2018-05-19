@@ -28,11 +28,16 @@ import cn.smssdk.EventHandler;
 import cn.smssdk.SMSSDK;
 import cn.smssdk.gui.RegisterPage;
 
-/**注册的APP
- * Created by dd on 2018/4/16.
+/**注册和登陆的Activity
+ * XML上将注册和登陆写在了一起，所以这里也写在一起了
+ * 主要逻辑很简单，是点击后触发事件
+ * 信验证码采用了mob的SMSSDK , 主要有请求验证码，提交校验验证码两个事件，以上两个事件将在UIhandle处理反馈
+ * 在校验验证码成功后将用户数据提交到数据库
+ * 登陆时将校验登陆用户名和密码
+ * Created by dd on 2018/4/1.
  */
 
-public class RegisteredActivity extends Activity implements View.OnClickListener{
+public class RegisteredAndLoginActivity extends Activity implements View.OnClickListener{
     private RelativeLayout registerRl;
     private RelativeLayout loginRl;
     private TextView registerTv;
@@ -58,26 +63,24 @@ public class RegisteredActivity extends Activity implements View.OnClickListener
         super.onCreate(savedInstanceState);
         MobSDK.init(this);
         setContentView(R.layout.ui_login);
-
-        getCodeButton =findViewById(R.id.bt_register_code);
-
+        getCodeButton = findViewById(R.id.bt_register_code);
         ///////////////////////////////////输入框////////////////////////////
-        regPassword=findViewById(R.id.registered_password);
-        regPhone=findViewById(R.id.registered_phone);
-        etCode=findViewById(R.id.et_registered_code);
+        regPassword = findViewById(R.id.registered_password);
+        regPhone = findViewById(R.id.registered_phone);
+        etCode = findViewById(R.id.et_registered_code);
         /////////////////////////////////////////UI显示与隐藏///////////////////
-        loginRl= (RelativeLayout) findViewById(R.id.login_Layout);
-        registerRl= (RelativeLayout) findViewById(R.id.registered_layout);
-        registerTv = (TextView) findViewById(R.id.registered);
-        loginTv= (TextView) findViewById(R.id.login_in);
+        loginRl = findViewById(R.id.login_Layout);
+        registerRl = findViewById(R.id.registered_layout);
+        registerTv = findViewById(R.id.registered);
+        loginTv = findViewById(R.id.login_in);
         //////////////////////////////////////登陆与注册确认按钮////////////////////////////
-        loginButton= (Button) findViewById(R.id.login_button);
-        toRegisterButton= (Button) findViewById(R.id.registered_button);
-        init();
+        loginButton = findViewById(R.id.login_button);
+        toRegisterButton = findViewById(R.id.registered_button);
+        onClickInit();
 
     }
 
-    private void init() {
+    private void onClickInit() {
         registerTv.setOnClickListener(this);
         loginTv.setOnClickListener(this);
         loginButton.setOnClickListener(this);
@@ -90,37 +93,27 @@ public class RegisteredActivity extends Activity implements View.OnClickListener
     public void onClick(View view) {
         switch (view.getId()){
             case R.id.registered:       //点击注册，显示注册界面
-
                 loginRl.setVisibility(View.INVISIBLE);
                 registerRl.setVisibility(View.VISIBLE);
                 break;
             case R.id.login_in:         //点击登录，显示登录界面
-
                 registerRl.setVisibility(View.INVISIBLE);
                 loginRl.setVisibility(View.VISIBLE);
-
                 break;
             case R.id.login_button:     //点击登录按钮
-
+                //TODO 登录功能没完善
                 Toast.makeText(getApplicationContext(),"点击登录",Toast.LENGTH_SHORT).show();
-
                 break;
             case R.id.registered_button: //点击注册按钮
-
                 toRegisterDetail();
-                Toast.makeText(getApplicationContext(), "点击注册", Toast.LENGTH_SHORT).show();
-
                 break;
             case R.id.bt_register_code: //点击获取验证码按钮
                 getCodeDetail();
                 break;
-
         }
     }
 
     public void toRegisterDetail(){
-
-        Toast.makeText(getApplicationContext(), "点击注册", Toast.LENGTH_SHORT).show();
         String country = "86";
         String phone = regPhone.getText().toString();
         String code = etCode.getText().toString();
@@ -146,10 +139,7 @@ public class RegisteredActivity extends Activity implements View.OnClickListener
         myCountDownTimer =new MyCountDownTimer(30000,1000,getCodeButton);
         if (TextUtils.isEmpty(phone)) {
             Toast.makeText(getApplicationContext(), "手机号码不能为空", Toast.LENGTH_SHORT).show();
-
         }else if (isMobileNO(phone)){
-
-            //getCodeButton.setClickable(false);//TODO 换一个样式,增加倒数
             SMSSDK.registerEventHandler(eventHandler);
             SMSSDK.getVerificationCode(country,phone);
         }else {
@@ -164,61 +154,50 @@ public class RegisteredActivity extends Activity implements View.OnClickListener
             msg.arg1 = event;
             msg.arg2 = result;
             msg.obj = data;
-            myHandler.sendMessage(msg);
-            //将以上信息移交到myandler 中处理
+            UIHandler.sendMessage(msg); //evenHandler 不能进行UI操作，所以传递到UIHandler 中
         }
     };
 
-    Handler myHandler =new Handler(){
+    Handler UIHandler = new Handler(){
         @Override
         public void handleMessage(Message msg) {
-            if (msg.what == -1) { //修改控件文本进行倒计时 i 以60秒倒计时为例
-                getCodeButton.setText(" s"); }
-            else if (msg.what == -2) {
-                //修改控件文本，进行重新发送验证码
-                getCodeButton.setText("重新发送");
-                getCodeButton.setClickable(true);
-                //i = 60;
-            } else {
-                int event = msg.arg1;
-                int result = msg.arg2;
-                Object data = msg.obj;
+            int event = msg.arg1;
+            int result = msg.arg2;
+            Object data = msg.obj;
 
-                //判断顺序result->event  result表示成功与否 event表示事件类型，包括提交验证码，验证 验证码 等。。
-                if (result == SMSSDK.RESULT_COMPLETE) {
-                    //回调完成
-                    if (event == SMSSDK.EVENT_SUBMIT_VERIFICATION_CODE) {   //value=3
-                        //TODO 向数据库提交账号密码
-                        Intent intent  =new Intent();
-                        intent.setClass(getApplicationContext(),MainActivity.class);
-                        startActivity(intent);
-                        Toast.makeText(getApplicationContext(), "注册成功，正在登陆。。", Toast.LENGTH_SHORT).show();
-
-                    } else if (event == SMSSDK.EVENT_GET_VERIFICATION_CODE) {
-                        Toast.makeText(getApplicationContext(),"获取验证码成功",Toast.LENGTH_LONG).show();
-                        myCountDownTimer.start();
-
-                    } else if (event == SMSSDK.EVENT_GET_SUPPORTED_COUNTRIES) {
-                        //返回支持发送验证码的国家列表
-                    }
+            //判断顺序result->event  result表示成功与否 event表示事件类型，包括提交验证码，验证 验证码 等。。
+            if (result == SMSSDK.RESULT_COMPLETE) {
+                //回调完成
+                if (event == SMSSDK.EVENT_SUBMIT_VERIFICATION_CODE) {   //value=3
+                    //TODO 向数据库提交账号密码
+                    Intent intent  =new Intent();
+                    intent.setClass(getApplicationContext(),MainActivity.class);
+                    startActivity(intent);
+                    Toast.makeText(getApplicationContext(), "注册成功，正在登陆。。", Toast.LENGTH_SHORT).show();
+                } else if (event == SMSSDK.EVENT_GET_VERIFICATION_CODE) {
+                    Toast.makeText(getApplicationContext(),"获取验证码成功",Toast.LENGTH_LONG).show();
+                    myCountDownTimer.start();  //启动获取验证码的倒计时按钮计时
+                } else if (event == SMSSDK.EVENT_GET_SUPPORTED_COUNTRIES) {
+                    //返回支持发送验证码的国家列表
                 }
-                if (result == SMSSDK.RESULT_ERROR) {
-                    try {
-                        Throwable throwable = (Throwable) data;
-                        throwable.printStackTrace();
-                        JSONObject object = new JSONObject(throwable.getMessage());
-                        String des = object.optString("detail");//错误描述
-                        int status = object.optInt("status");//错误代码
-                        if (status > 0 && !TextUtils.isEmpty(des)) {
-                            Toast.makeText(getApplicationContext(), des, Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-                    } catch (Exception e) { //do something
-
+            }
+            if (result == SMSSDK.RESULT_ERROR) {
+                try {
+                    Throwable throwable = (Throwable) data;
+                    throwable.printStackTrace();
+                    JSONObject object = new JSONObject(throwable.getMessage());
+                    String des = object.optString("detail");//错误描述
+                    int status = object.optInt("status");//错误代码
+                    if (status > 0 && !TextUtils.isEmpty(des)) {
+                        Toast.makeText(getApplicationContext(), des, Toast.LENGTH_SHORT).show();
+                        return;
                     }
+                } catch (Exception e) { //do something
+
                 }
             }
         }
+
     };
 
     /**
