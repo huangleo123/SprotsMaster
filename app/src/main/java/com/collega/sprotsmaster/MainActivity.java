@@ -1,17 +1,11 @@
 package com.collega.sprotsmaster;
 
-import android.os.Build;
-import android.support.annotation.RequiresApi;
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.app.Activity;
 
-public class MainActivity extends AppCompatActivity {
+import android.os.Bundle;
+
+
+public class MainActivity extends Activity {
 
 
     @Override

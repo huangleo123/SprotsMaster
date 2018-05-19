@@ -3,6 +3,7 @@ apply plugin: "com.mob.sdk"
 android {
     compileSdkVersion 26
     buildToolsVersion "26.0.1"
+    useLibrary 'org.apache.http.legacy'
     defaultConfig {
         applicationId "com.collega.sprotsmaster"
         minSdkVersion 19
@@ -10,6 +11,17 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        ndk {
+            //选择要添加的对应cpu类型的.so库。
+            abiFilters 'armeabi', 'armeabi-v7a', 'arm64-v8a'
+            // 还可以添加 'x86', 'x86_64', 'mips', 'mips64'
+        }
+
+        manifestPlaceholders = [
+                JPUSH_PKGNAME : applicationId,
+                JPUSH_APPKEY : "a09cd598066dcf60f2b792e1", //JPush上注册的包名对应的appkey.
+                JPUSH_CHANNEL : "developer-default", //暂时填写默认值即可.
+        ]
     }
     buildTypes {
         release {
@@ -18,13 +30,9 @@ android {
         }
     }
 }
-
-apply plugin: 'com.mob.sdk'
 MobSDK {
     appKey "2541e70e5b600"
     appSecret "d22126228f6fe294aebc6b7d74f98a1d"
-
-
     SMSSDK {}
 }
 
@@ -37,4 +45,7 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.github.XingdongYu:QQNaviView:v1.0.2'
     compile 'com.github.LillteZheng:ViewPagerHelper:v0.5'
+    compile 'cn.jiguang.sdk:jpush:3.1.1'  // 此处以JPush 3.1.1 版本为例。
+    compile 'cn.jiguang.sdk:jcore:1.1.9'  // 此处以JCore 1.1.9 版本为例。
+
 }

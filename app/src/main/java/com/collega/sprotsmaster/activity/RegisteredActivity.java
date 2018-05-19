@@ -17,6 +17,7 @@ import android.widget.Toast;
 
 import com.collega.sprotsmaster.MainActivity;
 import com.collega.sprotsmaster.R;
+import com.collega.sprotsmaster.util.MyCountDownTimer;
 import com.mob.MobSDK;
 
 import org.json.JSONObject;
@@ -48,6 +49,7 @@ public class RegisteredActivity extends Activity implements View.OnClickListener
     private EditText etCode;
     private EditText regPhone;
     private EditText regPassword;
+    private MyCountDownTimer myCountDownTimer;
     ///////////////以上是输入框的/////////////
 
 
@@ -141,7 +143,7 @@ public class RegisteredActivity extends Activity implements View.OnClickListener
         String country ="86";//没有扩展全球的手机，只支持中国的手机
         String phone=regPhone.getText().toString();
         //按钮不可点击，开始计时间
-        //MyCountDownTimer myCountDownTimer =new MyCountDownTimer(30000,1000);
+        myCountDownTimer =new MyCountDownTimer(30000,1000,getCodeButton);
         if (TextUtils.isEmpty(phone)) {
             Toast.makeText(getApplicationContext(), "手机号码不能为空", Toast.LENGTH_SHORT).show();
 
@@ -186,15 +188,16 @@ public class RegisteredActivity extends Activity implements View.OnClickListener
                 if (result == SMSSDK.RESULT_COMPLETE) {
                     //回调完成
                     if (event == SMSSDK.EVENT_SUBMIT_VERIFICATION_CODE) {   //value=3
-                        //向数据库提交账号密码
+                        //TODO 向数据库提交账号密码
                         Intent intent  =new Intent();
                         intent.setClass(getApplicationContext(),MainActivity.class);
                         startActivity(intent);
                         Toast.makeText(getApplicationContext(), "注册成功，正在登陆。。", Toast.LENGTH_SHORT).show();
 
                     } else if (event == SMSSDK.EVENT_GET_VERIFICATION_CODE) {
-                        //获取验证码成功
                         Toast.makeText(getApplicationContext(),"获取验证码成功",Toast.LENGTH_LONG).show();
+                        myCountDownTimer.start();
+
                     } else if (event == SMSSDK.EVENT_GET_SUPPORTED_COUNTRIES) {
                         //返回支持发送验证码的国家列表
                     }
@@ -218,6 +221,11 @@ public class RegisteredActivity extends Activity implements View.OnClickListener
         }
     };
 
+    /**
+     * 判断是否符合手机号码规则
+     * @param phone
+     * @return
+     */
     private boolean isMobileNO(String phone) {
        /*
     移动：134、135、136、137、138、139、150、151、157(TD)、158、159、187、188
